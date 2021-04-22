@@ -72,7 +72,7 @@ void dispatch_threads(phil_data *philosophers) {
 }
 
 int main(int argc, char **argv) {
-    int num_philosophers, num_forks, error;
+    int num_philosophers, num_forks;
 
     if (argc < 2) {
         std::cerr << "Format: " << argv[0] << " <Number of philosophers>" << std::endl;
