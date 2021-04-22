@@ -194,14 +194,14 @@ int main(int argc, char *argv[]) {
     dispatch_threads();
 
     /* ********Start writing output to your file************ */
-    std::ofstream ofile(argv[2], std::ios::binary);
+    std::ofstream ofile(argv[2]);
     if (ofile.is_open()) {
-        ofile << "P2" << "\n" << image_width << " " << image_height << "\n" << image_maxShades << "\n";
+        ofile << "P2" << "\r\n" << image_width << " " << image_height << "\r\n" << image_maxShades << "\r\n";
         for (int i = 0; i < image_height; i++) {
             for (int j = 0; j < image_width; j++) {
                 ofile << outputImage[i][j] << " ";
             }
-            ofile << "\n";
+            ofile << "\r\n";
         }
     } else {
         std::cout << "ERROR: Could not open output file " << argv[2] << std::endl;
