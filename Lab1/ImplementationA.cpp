@@ -104,7 +104,6 @@ int main(int argc, char **argv) {
             std::cout << "Philosopher " << i << " ate meal " << j << " at "
                       << philosophers[i].meal_time[j] - start_time << std::endl;
         }
-        std::cout << std::endl;
     }
 
     return 0;
