@@ -32,17 +32,15 @@ void eat_meal(phil_data &this_philosopher, phil_data &next_philosopher) {
  */
     while (this_philosopher.course < 3) {
         bool first_fork = false;
-        if ((this_philosopher.fork).compare_exchange_strong(first_fork, false)) {
-            this_philosopher.fork = true;
+        if ((this_philosopher.fork).compare_exchange_strong(first_fork, true)) {
             //std::cout << "Philosopher " << this_philosopher.phil_num << " starts to eat." << std::endl;
-            if ((next_philosopher.fork).compare_exchange_strong(first_fork, false)) {
-                next_philosopher.fork = true;
+            if ((next_philosopher.fork).compare_exchange_strong(first_fork, true)) {
+                std::time_t current_time;
+                this_philosopher.meal_time[this_philosopher.course] = std::time(&current_time);
                 std::this_thread::sleep_for(std::chrono::seconds(1));
                 //std::cout << "Philosopher " << this_philosopher.phil_num << " finishes eating " << this_philosopher.course << " time" << std::endl;
                 this_philosopher.fork = false;
                 next_philosopher.fork = false;
-                std::time_t current_time;
-                this_philosopher.meal_time[this_philosopher.course] = std::time(&current_time);
                 this_philosopher.course++;
             } else {
                 this_philosopher.fork = false;
@@ -63,12 +61,15 @@ void dispatch_threads(phil_data *philosophers) {
     std::vector<std::thread> threads;
     threads.reserve(num_threads);
     for (int i = 0; i < num_threads - 1; i++) {
+        std::cout << "Creating thread " << i << std::endl;
         threads.emplace_back(eat_meal, std::ref(philosophers[i]), std::ref(philosophers[i + 1]));
     }
+    std::cout << "Creating thread " << num_threads - 1 << std::endl;
     threads.emplace_back(eat_meal, std::ref(philosophers[num_threads - 1]), std::ref(philosophers[0]));
     for (int i = 0; i < num_threads; i++) {
         threads[i].join();
     }
+    std::cout << "Joined all threads" << std::endl;
 }
 
 int main(int argc, char **argv) {
@@ -100,7 +101,7 @@ int main(int argc, char **argv) {
 
     for (int i = 0; i < num_philosophers; i++) {
         for (int j = 0; j < 3; j++) {
-            std::cout << "Philosopher " << i + 1 << " finish NO." << j + 1 << " meal at time "
+            std::cout << "Philosopher " << i << " ate meal " << j << " at "
                       << philosophers[i].meal_time[j] - start_time << std::endl;
         }
         std::cout << std::endl;
