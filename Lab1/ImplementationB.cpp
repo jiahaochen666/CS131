@@ -27,7 +27,7 @@ typedef struct chunk
     int end;
 } chunk;
 
-void edge_detect(std::vector<chunk *> &chunks, int i)
+void edge_detect(std::vector<chunk *> &chunks)
 {
     while (true)
     {
@@ -117,7 +117,7 @@ void dispatch_threads()
     }
     for (int i = 0; i < num_threads; i++)
     {
-        threads.emplace_back(edge_detect, std::ref(chunks), i);
+        threads.emplace_back(edge_detect, std::ref(chunks));
     }
     for (int i = 0; i < num_threads; i++)
     {
