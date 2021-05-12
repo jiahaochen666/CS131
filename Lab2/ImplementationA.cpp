@@ -13,7 +13,7 @@ int *initialize(int value, int length)
     return out;
 }
 
-int* get_image(char *filename, int *image_size)
+int *get_image(char *filename, int *image_size)
 {
     std::ifstream file(filename);
     if (!file.is_open())
@@ -63,13 +63,16 @@ int* get_image(char *filename, int *image_size)
     }
     /* Check image max shades */
     int image_maxShades;
-    while(std::getline(file,workString))
+    while (std::getline(file, workString))
     {
-        if( workString.at(0) != '#' ){
+        if (workString.at(0) != '#')
+        {
             std::stringstream stream(workString);
             stream >> image_maxShades;
             break;
-        } else {
+        }
+        else
+        {
             continue;
         }
     }
@@ -140,7 +143,8 @@ int main(int argc, char *argv[])
     {
         matrix = get_matrix(argv[2], num_of_processes);
         image = get_image(argv[1], &image_size);
-        for (int i = 0; i < num_of_processes; i++){
+        for (int i = 0; i < num_of_processes; i++)
+        {
             average_size = image_size / num_of_processes;
             MPI_Send(&average_size, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
         }
@@ -161,33 +165,54 @@ int main(int argc, char *argv[])
     }
 
     /* Tarry's Algorithm */
-    int parent;
-    int* message = initialize(-1, 256);
-    if (rank != 2)
+    int parent = -1;
+    int message[256];
+    if (rank == 2)
     {
-        MPI_Recv(message, 256, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
-        parent = status.MPI_SOURCE;
-    }
-    for (int i = 0; i < num_of_processes; i++)
-    {
-        //std::cout << "rank: " << rank << "index: " << i << "\n";
-        if (sub_matrix[i] == 1 && i != parent)
+        for (int i = 0; i < num_of_processes; i++)
         {
-            MPI_Send(message, 256, MPI_INT, i, 0, MPI_COMM_WORLD);
-            MPI_Recv(message, 256, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
-            if (message[0] != -1)
+            if (sub_matrix[i] == 1)
             {
-                for (int j = 0; j < 256; j++)
-                {
-                    histogram[j] += message[j];
-                    message[j] = -1;
-                }
+                //std::cout << "rank " << rank << " send to index " << i << "\n";
+                MPI_Send(histogram, 256, MPI_INT, i, 0, MPI_COMM_WORLD);
+                sub_matrix[i] = 0;
+                MPI_Recv(histogram, 256, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
+                //std::cout << "rank " << rank << " receive from index " << status.MPI_SOURCE << "\n";
+                parent = status.MPI_SOURCE;
             }
         }
     }
-    if (rank != 2)
-        MPI_Send(histogram, 256, MPI_INT, parent, 0, MPI_COMM_WORLD);
     else
+    {
+        for (int i = 0; i < num_of_processes; i++)
+        {
+            if (sub_matrix[i] == 1)
+            {
+                MPI_Recv(&message, 256, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
+                //std::cout << "rank " << rank << " receive from index " << status.MPI_SOURCE << "\n";
+                if (parent == -1)
+                {
+                    parent = status.MPI_SOURCE;
+                    for (int j = 0; j < 256; j++)
+                    {
+                        message[j] += histogram[j];
+                    }
+                }
+                for (int j = i; j < num_of_processes; j++)
+                {
+                    if (sub_matrix[j] == 1 && j != parent)
+                    {
+                        //std::cout << "rank " << rank << " send to index " << j << "\n";
+                        MPI_Send(&message, 256, MPI_INT, j, 0, MPI_COMM_WORLD);
+                        sub_matrix[j] = 0;
+                        break;
+                    }
+                }
+            }
+        }
+        MPI_Send(histogram, 256, MPI_INT, parent, 0, MPI_COMM_WORLD);
+    }
+    if (rank == 2)
     {
         std::ofstream output;
         output.open(argv[3]);
