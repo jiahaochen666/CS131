@@ -2,6 +2,8 @@
 #include <fstream>
 #include <sstream>
 #include <mpi.h>
+#include <vector>
+#include <algorithm>
 
 int *initialize(int value, int length)
 {
@@ -167,6 +169,8 @@ int main(int argc, char *argv[])
     /* Tarry's Algorithm */
     int parent = -1;
     int message[256];
+    std::vector<int> visited;
+    std::vector<int>::iterator it;
     if (rank == 2)
     {
         for (int i = 0; i < num_of_processes; i++)
@@ -192,25 +196,26 @@ int main(int argc, char *argv[])
                 //std::cout << "rank " << rank << " receive from index " << status.MPI_SOURCE << "\n";
                 if (parent == -1)
                 {
-                    parent = status.MPI_SOURCE;
                     for (int j = 0; j < 256; j++)
                     {
                         message[j] += histogram[j];
                     }
                 }
-                for (int j = i; j < num_of_processes; j++)
+                parent = status.MPI_SOURCE;
+                for (int j = 0; j < num_of_processes; j++)
                 {
-                    if (sub_matrix[j] == 1 && j != parent)
+                    it = std::find(visited.begin(), visited.end(), j);
+                    if (sub_matrix[j] == 1 && j != parent && it == visited.end())
                     {
                         //std::cout << "rank " << rank << " send to index " << j << "\n";
                         MPI_Send(&message, 256, MPI_INT, j, 0, MPI_COMM_WORLD);
-                        sub_matrix[j] = 0;
+                        visited.push_back(j);
                         break;
                     }
                 }
             }
         }
-        MPI_Send(histogram, 256, MPI_INT, parent, 0, MPI_COMM_WORLD);
+        MPI_Send(&message, 256, MPI_INT, parent, 0, MPI_COMM_WORLD);
     }
     if (rank == 2)
     {
