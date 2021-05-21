@@ -95,7 +95,7 @@ void dispatch_threads()
     if (last_chunk > 0)
     {
         rows_of_chunk++;
-        last_chunk = image_height - (maxChunk--) * rows_of_chunk;
+        last_chunk = image_height - (--maxChunk) * rows_of_chunk;
     }
     int counter = 0;
     std::vector<chunk *> chunks;
@@ -243,16 +243,16 @@ int main(int argc, char *argv[])
     if (ofile.is_open())
     {
         ofile << "P2"
-              << "\r\n"
-              << image_width << " " << image_height << "\r\n"
-              << image_maxShades << "\r\n";
+              << "\n"
+              << image_width << " " << image_height << "\n"
+              << image_maxShades << "\n";
         for (int i = 0; i < image_height; i++)
         {
             for (int j = 0; j < image_width; j++)
             {
                 ofile << outputImage[i][j] << " ";
             }
-            ofile << "\r\n";
+            ofile << "\n";
         }
     }
     else
